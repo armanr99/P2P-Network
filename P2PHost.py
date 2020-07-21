@@ -54,6 +54,7 @@ class P2PHost:
                     self.send_hello_packet(random_host_address)
             
             self.neighbour_addresses_lock.release()
+
             time.sleep(config.FIND_NEIGHBOURS_PERIOD)
 
     def receive_packet_run(self):
@@ -61,10 +62,12 @@ class P2PHost:
             received_data = self.udp_tools.receive_udp_packet()
             p2p_packet = pickle.loads(received_data)
             self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
-            neighbour_addresses = self.get_neighbour_addresses()
-            
-            print(p2p_packet.host_address)
 
+            is_lost_packet = (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY)
+            if is_lost_packet:
+                continue
+            
+            neighbour_addresses = self.get_neighbour_addresses()
             if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
                 if p2p_packet.host_address not in neighbour_addresses:
                     neighbour_addresses.add(p2p_packet.host_address)
@@ -82,6 +85,7 @@ class P2PHost:
                     neighbour_addresses.remove(neighbour_address)
             
             self.neighbour_addresses_lock.release()
+                
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
 
