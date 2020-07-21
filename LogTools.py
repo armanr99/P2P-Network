@@ -1,6 +1,7 @@
 import os
 import shutil
 import config
+import json
 
 class LogTools:
     def __init__(self, host_address):
@@ -52,8 +53,13 @@ class LogTools:
     def get_host_directory_path(self):
         return (config.RESULTS_DIRECTORY + "/" + self.host_address[0] + ":" + str(self.host_address[1]))
 
+    def write_json(self, path, data):
+        with open(path, "w", encoding="utf-8") as result_file:
+            json.dump(data, result_file, ensure_ascii=False, indent=4)
+
     def write_all_neighbours(self):
-        pass
+        all_neighbours_result_path = self.get_host_directory_path() + "/" + "1-AllNeighbours.json"
+        self.write_json(all_neighbours_result_path, list(self.all_neighbour_addresses))
 
     def write_last_neighbours(self):
         pass
