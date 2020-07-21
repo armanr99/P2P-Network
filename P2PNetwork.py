@@ -28,8 +28,11 @@ class P2PNetwork:
 
     def finish_hosts_run(self):
         time.sleep(config.SIMULATION_TIME)
+        
         for host in self.hosts:
             host.stop()
+
+        print("Finished!")
 
     def pause_host_run(self):
         passed_time = 0

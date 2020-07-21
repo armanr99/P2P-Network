@@ -17,9 +17,9 @@ class P2PHost:
         self.neighbour_addresses = set()
         self.hosts_last_receive_time = dict()
         self.init_hosts_last_receive_time()
-        self.udp_tools = UDPTools(host_address)
         self.lock = threading.Lock()
-        self.log_tools = LogTools()
+        self.udp_tools = UDPTools(host_address)
+        self.log_tools = LogTools(host_address)
 
     def init_hosts_last_receive_time(self):
         for host_address in config.HOST_ADDRESSES:
@@ -35,6 +35,7 @@ class P2PHost:
     def stop(self):
         self.is_finished = True
         self.udp_tools.stop()
+        self.log_tools.write_results()
 
     def pause(self):
         self.is_paused = True
@@ -75,12 +76,11 @@ class P2PHost:
                 p2p_packet = pickle.loads(received_data)
                 self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
 
-                is_lost_packet = (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY)
-                if is_lost_packet:
+                if (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY):
                     continue
 
                 self.log_tools.add_unidirectional_received_address_log(p2p_packet.host_address)
-                
+            
                 self.lock.acquire()
 
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
