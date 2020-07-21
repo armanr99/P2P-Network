@@ -57,12 +57,12 @@ class P2PHost:
             if not self.is_paused:
                 neighbour_addresses = self.get_neighbour_addresses()
 
-                if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
+                if len(neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                         random_host_address = random.choice(tuple(config.HOST_ADDRESSES - neighbour_addresses))
                         self.send_hello_packet(random_host_address)
                 
                 self.neighbour_addresses_lock.release()
-                
+
             time.sleep(config.FIND_NEIGHBOURS_PERIOD)
 
     def receive_packet_run(self):
@@ -77,7 +77,7 @@ class P2PHost:
                     continue
                 
                 neighbour_addresses = self.get_neighbour_addresses()
-                if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
+                if len(neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                     if p2p_packet.host_address not in neighbour_addresses:
                         neighbour_addresses.add(p2p_packet.host_address)
                         if self.host_address not in p2p_packet.neighbour_addresses:
