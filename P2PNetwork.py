@@ -1,27 +1,28 @@
-from P2PHost import P2PHost
-import multiprocessing
+import threading
+import time
 import config
+
+from P2PHost import P2PHost
 
 class P2PNetwork:
     def __init__(self):
-        self.host_processes = list()
+        self.hosts = list()
 
     def start(self):
-        self.create_host_processes()
-        self.start_host_processes()
+        self.create_hosts()
+        self.run_hosts()
 
     def stop(self):
         pass
 
-    def start_host_process(self, host_ip, host_port):
-        p2p_host = P2PHost(host_ip, host_port)
-        p2p_host.start()
-
-    def create_host_processes(self):
+    def create_hosts(self):
         for host_port in config.HOSTS_PORTS:
-            host_process = multiprocessing.Process(target=self.start_host_process, args=(config.HOSTS_IP, host_port))
-            self.host_processes.append(host_process)
+            self.hosts.append(P2PHost(config.HOST_IP, host_port))
 
-    def start_host_processes(self):
-        for host_process in self.host_processes:
-            host_process.start()
+    def run_host(self, host):
+        host.start()
+
+    def run_hosts(self):
+        for host in self.hosts:
+            host_thread = threading.Thread(target=host.start)
+            host_thread.start()
