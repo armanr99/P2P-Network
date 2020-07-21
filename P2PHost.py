@@ -34,6 +34,7 @@ class P2PHost:
     def stop(self):
         self.is_finished = True
         self.udp_tools.stop()
+        self.log_tools.log_last_neighbours(self.neighbour_addresses)
 
     def pause(self):
         self.is_paused = True
