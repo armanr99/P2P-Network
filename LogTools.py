@@ -62,7 +62,8 @@ class LogTools:
         self.write_json(all_neighbours_result_path, list(self.all_neighbour_addresses))
 
     def write_last_neighbours(self):
-        pass
+        last_neighbours_result_path = self.get_host_directory_path() + "/" + "2-LastNeighbours.json"
+        self.write_json(last_neighbours_result_path, list(self.latest_neighbours_infos.keys()))
     
     def write_hosts_availability(self):
         pass
