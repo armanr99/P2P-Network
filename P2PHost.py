@@ -6,6 +6,7 @@ import pickle
 
 from P2PPacket import P2PPacket
 from UDPTools import UDPTools
+from LogTools import LogTools
 
 class P2PHost:
     def __init__(self, host_address):
@@ -17,6 +18,7 @@ class P2PHost:
         self.init_hosts_last_receive_time()
         self.udp_tools = UDPTools(host_address)
         self.lock = threading.Lock()
+        self.log_tools = LogTools()
 
     def init_hosts_last_receive_time(self):
         for host_address in config.HOST_ADDRESSES:
@@ -79,6 +81,7 @@ class P2PHost:
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                     if p2p_packet.host_address not in self.neighbour_addresses:
                         self.neighbour_addresses.add(p2p_packet.host_address)
+                        self.log_tools.log_neighbour(p2p_packet.host_address)
                         if self.host_address not in p2p_packet.neighbour_addresses:
                             self.send_hello_packet(p2p_packet.host_address)
 
