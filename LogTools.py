@@ -21,7 +21,7 @@ class LogTools:
 
     def log_neighbour(self, neighbour_address, neighbour_neighbour_addresses):
         self.all_neighbour_addresses.add(neighbour_address)
-        self.latest_neighbours_infos[neighbour_address] = config.LOG_NEIGHBOURS_TIME_PERIOD
+        self.latest_neighbours_infos[neighbour_address] = list(neighbour_neighbour_addresses)
 
     def log_remove_neighbour(self, neighbour_address):
         if neighbour_address in self.latest_neighbours_infos:
@@ -72,7 +72,9 @@ class LogTools:
         self.write_json(neighbour_availabilities_result_path, neighbour_availabilities)
 
     def write_last_neighbours_neighbours(self):
-        pass
+        last_neighbours_neighbours_result_path = self.get_host_directory_path() + "/" + "4-LastNeighbourNeighbours.json"
+        last_neighbours_neighbours = self.get_remaped_dict(self.latest_neighbours_infos, "host", "neighbours")
+        self.write_json(last_neighbours_neighbours_result_path, last_neighbours_neighbours)
 
     def write_unidirectional_sent_packets(self):
         pass
