@@ -1,2 +1,3 @@
 class P2PHost:
-    pass
+    def start(self):
+        pass
