@@ -1,7 +1,7 @@
 class P2PPacket:
-    def __init__(self, host_address, message_type, bidrectional_addresses, last_time_sent, last_time_received):
+    def __init__(self, host_address, message_type, neighbour_addresses, last_time_sent, last_time_received):
         self.host_address = host_address
         self.message_type = message_type
-        self.bidrectional_addresses = bidrectional_addresses
+        self.neighbour_addresses = neighbour_addresses
         self.last_time_sent = last_time_sent
         self.last_time_received = last_time_received
