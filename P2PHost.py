@@ -84,7 +84,7 @@ class P2PHost:
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                     if p2p_packet.host_address not in self.neighbour_addresses:
                         self.neighbour_addresses.add(p2p_packet.host_address)
-                        self.log_tools.log_neighbour(p2p_packet.host_address)
+                        self.log_tools.log_neighbour(p2p_packet.host_address, p2p_packet.neighbour_addresses)
                         if self.host_address not in p2p_packet.neighbour_addresses:
                             self.send_hello_packet(p2p_packet.host_address)
 
@@ -98,6 +98,7 @@ class P2PHost:
                 for neighbour_address in list(self.neighbour_addresses):
                     if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
                         self.neighbour_addresses.remove(neighbour_address)
+                        self.log_tools.log_remove_neighbour(neighbour_address)
                 
                 self.lock.release()
                 
