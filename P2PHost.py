@@ -12,8 +12,6 @@ class P2PHost:
         self.host_address = host_address
         self.is_finished = False
         self.bidirectional_host_addresses = set()
-        self.unidirectional_received_host_addresses = set()
-        self.unidirectional_sent_host_addresses = set()
         self.hosts_last_receive_time = dict()
         self.init_hosts_last_receive_time()
         self.udp_tools = UDPTools(host_address)
@@ -37,10 +35,8 @@ class P2PHost:
     def find_neighbours_run(self):
         while not self.is_finished:
             if len(self.bidirectional_host_addresses) < config.NUMBER_OF_NEIGHBOURS:
-                if len(self.unidirectional_received_host_addresses) == 0:
-                    self.send_find_to_random()
-                else:
-                    self.send_find_to_unidirectional_receiveds()
+                    random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.bidirectional_host_addresses))
+                    self.send_hello_packet(random_host_address)
 
             time.sleep(config.CHECK_NEIGHBOUR_TIME)
 
@@ -52,10 +48,10 @@ class P2PHost:
             if len(self.bidirectional_host_addresses) < config.NUMBER_OF_NEIGHBOURS:
                 if p2p_packet.host_address in self.bidirectional_host_addresses:
                     break
-                elif self.host_address in p2p_packet.bidirectional_host_address:
-                    self.bidirectional_host_addresses.add(p2p_packet.host)
                 else:
-                    self.unidirectional_received_host_addresses.add(p2p_packet.address)
+                    self.bidirectional_host_addresses.add(p2p_packet.host)
+                    if self.host_address not in p2p_packet.bidirectional_host_address:
+                        self.send_hello_packet(p2p_packet.host)
 
     def get_hello_packet(self, host_address):
         return P2PPacket(self.host_address, config.HELLO_MESSAGE_TYPE, 
@@ -64,17 +60,4 @@ class P2PHost:
     def send_hello_packet(self, host_address):
         hello_packet = self.get_hello_packet(host_address)
         self.udp_tools.send_udp_packet(host_address, pickle.dumps(hello_packet))
-
-    def send_find_to_random(self):
-        random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.bidirectional_host_addresses))
-        self.send_hello_packet(random_host_address)
-
-    def send_find_to_unidirectional_receiveds(self):
-        necessary_sends = config.NUMBER_OF_NEIGHBOURS - len(self.bidirectional_host_addresses)
-
-        for unidirectional_received_host_address in self.unidirectional_received_host_addresses:
-            if necessary_sends == 0:
-                break
-            self.send_hello_packet(unidirectional_received_host_address)
-            necessary_sends -= 1
                     
