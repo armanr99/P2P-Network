@@ -30,6 +30,7 @@ class P2PHost:
         threading.Thread(target=self.find_neighbours_run).start()
         threading.Thread(target=self.receive_packet_run).start()
         threading.Thread(target=self.remove_old_neighbours_run).start()
+        threading.Thread(target=self.gather_log_info_run).start()
 
     def stop(self):
         self.is_finished = True
@@ -102,6 +103,10 @@ class P2PHost:
                 
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
+    def gather_log_info_run(self):
+        while not self.is_finished:
+            self.log_tools.log_neighbours_access_times(self.neighbour_addresses)
+            time.sleep(config.LOG_NEIGHBOURS_TIME_PERIOD)
 
     def get_hello_packet(self, host_address):
         return P2PPacket(self.host_id, self.host_address, config.HELLO_MESSAGE_TYPE, 
