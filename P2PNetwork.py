@@ -19,8 +19,8 @@ class P2PNetwork:
         pass
 
     def create_hosts(self):
-        for host_address in config.HOST_ADDRESSES:
-            self.hosts.append(P2PHost(host_address))
+        for host_id, host_address in enumerate(config.HOST_ADDRESSES):
+            self.hosts.append(P2PHost(host_id, host_address))
 
     def run_hosts(self):
         for host in self.hosts:

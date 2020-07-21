@@ -9,7 +9,8 @@ from UDPTools import UDPTools
 from LogTools import LogTools
 
 class P2PHost:
-    def __init__(self, host_address):
+    def __init__(self, host_id, host_address):
+        self.host_id = host_id
         self.host_address = host_address
         self.is_finished = False
         self.is_paused = False
@@ -102,7 +103,7 @@ class P2PHost:
         
 
     def get_hello_packet(self, host_address):
-        return P2PPacket(self.host_address, config.HELLO_MESSAGE_TYPE, 
+        return P2PPacket(self.host_id, self.host_address, config.HELLO_MESSAGE_TYPE, 
             self.neighbour_addresses, time.time(), self.hosts_last_receive_time[host_address])
 
     def send_hello_packet(self, host_address):
