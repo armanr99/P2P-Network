@@ -35,7 +35,6 @@ class P2PHost:
     def stop(self):
         self.is_finished = True
         self.udp_tools.stop()
-        self.log_tools.log_last_neighbours(self.neighbour_addresses)
 
     def pause(self):
         self.is_paused = True
@@ -63,6 +62,7 @@ class P2PHost:
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                         random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
                         self.send_hello_packet(random_host_address)
+                        self.log_tools.add_unidirectional_sent_address_log(random_host_address)
                 
                 self.lock.release()
 
@@ -78,6 +78,8 @@ class P2PHost:
                 is_lost_packet = (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY)
                 if is_lost_packet:
                     continue
+
+                self.log_tools.add_unidirectional_received_address_log(p2p_packet.host_address)
                 
                 self.lock.acquire()
 

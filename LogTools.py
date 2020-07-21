@@ -5,6 +5,8 @@ class LogTools:
         self.all_neighbour_addresses = set()
         self.neighbours_access_times = dict()
         self.latest_neighbours_infos = dict()
+        self.unidirectional_sent_addresses = set()
+        self.unidirectional_received_addresses = set()
 
     def log_neighbours_access_times(self, current_neighbours_addresses):
         for neighbour_address in current_neighbours_addresses:
@@ -20,3 +22,9 @@ class LogTools:
     def log_remove_neighbour(self, neighbour_address):
         if neighbour_address in self.latest_neighbours_infos:
             del self.latest_neighbours_infos[neighbour_address]
+
+    def add_unidirectional_sent_address_log(self, unidirectional_received_address):
+        self.unidirectional_sent_addresses.add(unidirectional_received_address)
+
+    def add_unidirectional_received_address_log(self, unidirectional_received_address):
+        self.unidirectional_received_addresses.add(unidirectional_received_address)
