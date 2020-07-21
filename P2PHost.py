@@ -11,6 +11,7 @@ class P2PHost:
     def __init__(self, host_address):
         self.host_address = host_address
         self.is_finished = False
+        self.is_paused = False
         self.neighbour_addresses = set()
         self.hosts_last_receive_time = dict()
         self.init_hosts_last_receive_time()
@@ -31,6 +32,12 @@ class P2PHost:
         self.is_finished = True
         self.udp_tools.stop()
 
+    def pause(self):
+        self.is_paused = True
+
+    def resume(self):
+        self.is_paused = False
+
     def get_neighbour_addresses(self):
         self.neighbour_addresses_lock.acquire()
         return self.neighbour_addresses
@@ -47,44 +54,47 @@ class P2PHost:
 
     def find_neighbours_run(self):
         while not self.is_finished:
-            neighbour_addresses = self.get_neighbour_addresses()
+            if not self.is_paused:
+                neighbour_addresses = self.get_neighbour_addresses()
 
-            if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
-                    random_host_address = random.choice(tuple(config.HOST_ADDRESSES - neighbour_addresses))
-                    self.send_hello_packet(random_host_address)
-            
-            self.neighbour_addresses_lock.release()
-
+                if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
+                        random_host_address = random.choice(tuple(config.HOST_ADDRESSES - neighbour_addresses))
+                        self.send_hello_packet(random_host_address)
+                
+                self.neighbour_addresses_lock.release()
+                
             time.sleep(config.FIND_NEIGHBOURS_PERIOD)
 
     def receive_packet_run(self):
         while not self.is_finished:
-            received_data = self.udp_tools.receive_udp_packet()
-            p2p_packet = pickle.loads(received_data)
-            self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
+            if not self.is_paused:
+                received_data = self.udp_tools.receive_udp_packet()
+                p2p_packet = pickle.loads(received_data)
+                self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
 
-            is_lost_packet = (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY)
-            if is_lost_packet:
-                continue
-            
-            neighbour_addresses = self.get_neighbour_addresses()
-            if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
-                if p2p_packet.host_address not in neighbour_addresses:
-                    neighbour_addresses.add(p2p_packet.host_address)
-                    if self.host_address not in p2p_packet.neighbour_addresses:
-                        self.send_hello_packet(p2p_packet.host_address)
+                is_lost_packet = (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY)
+                if is_lost_packet:
+                    continue
+                
+                neighbour_addresses = self.get_neighbour_addresses()
+                if len(neighbour_addresses) < len(config.HOST_ADDRESSES):
+                    if p2p_packet.host_address not in neighbour_addresses:
+                        neighbour_addresses.add(p2p_packet.host_address)
+                        if self.host_address not in p2p_packet.neighbour_addresses:
+                            self.send_hello_packet(p2p_packet.host_address)
 
             self.neighbour_addresses_lock.release()
 
     def remove_old_neighbours_run(self):
         while not self.is_finished:
-            neighbour_addresses = self.get_neighbour_addresses()
+            if not self.is_paused:
+                neighbour_addresses = self.get_neighbour_addresses()
 
-            for neighbour_address in neighbour_addresses:
-                if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
-                    neighbour_addresses.remove(neighbour_address)
-            
-            self.neighbour_addresses_lock.release()
+                for neighbour_address in neighbour_addresses:
+                    if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
+                        neighbour_addresses.remove(neighbour_address)
+                
+                self.neighbour_addresses_lock.release()
                 
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
