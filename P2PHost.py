@@ -44,12 +44,14 @@ class P2PHost:
 
     def send_neighbours_packets_run(self):
         while not self.is_finished:
-            neighbour_addresses = self.get_neighbour_addresses()
+            if not self.is_paused:
+                neighbour_addresses = self.get_neighbour_addresses()
+                print(len(neighbour_addresses))
+                for neighbour_address in neighbour_addresses:
+                    self.send_hello_packet(neighbour_address)
 
-            for neighbour_address in neighbour_addresses:
-                self.send_hello_packet(neighbour_address)
+                self.neighbour_addresses_lock.release()
 
-            self.neighbour_addresses_lock.release()
             time.sleep(config.SEND_PERIOD)
 
     def find_neighbours_run(self):
@@ -77,13 +79,14 @@ class P2PHost:
                     continue
                 
                 neighbour_addresses = self.get_neighbour_addresses()
+
                 if len(neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                     if p2p_packet.host_address not in neighbour_addresses:
                         neighbour_addresses.add(p2p_packet.host_address)
                         if self.host_address not in p2p_packet.neighbour_addresses:
                             self.send_hello_packet(p2p_packet.host_address)
 
-            self.neighbour_addresses_lock.release()
+                self.neighbour_addresses_lock.release()
 
     def remove_old_neighbours_run(self):
         while not self.is_finished:
