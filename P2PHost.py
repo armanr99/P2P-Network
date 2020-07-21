@@ -107,8 +107,11 @@ class P2PHost:
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
     def gather_log_info_run(self):
-        while not self.is_finished:
+        time_passed = 0
+
+        while time_passed <= config.SIMULATION_TIME:
             self.log_tools.log_neighbours_access_times(self.neighbour_addresses)
+            time_passed += config.LOG_NEIGHBOURS_TIME_PERIOD
             time.sleep(config.LOG_NEIGHBOURS_TIME_PERIOD)
 
     def get_hello_packet(self, host_address):

@@ -66,7 +66,10 @@ class LogTools:
         self.write_json(last_neighbours_result_path, list(self.latest_neighbours_infos.keys()))
     
     def write_hosts_availability(self):
-        pass
+        neighbour_availabilities_result_path = self.get_host_directory_path() + "/" + "3-Availabilities.json"
+        neighbour_availabilities = {key: value / config.SIMULATION_TIME for key, value in self.neighbours_access_times.items()}
+        neighbour_availabilities = self.get_remaped_dict(neighbour_availabilities, "host", "availability")
+        self.write_json(neighbour_availabilities_result_path, neighbour_availabilities)
 
     def write_last_neighbours_neighbours(self):
         pass
@@ -76,3 +79,6 @@ class LogTools:
 
     def write_unidirectional_received_packets(self):
         pass
+
+    def get_remaped_dict(self, mapping, key, value):
+        return [{str(key):k, str(value): v} for k, v in mapping.items()]
