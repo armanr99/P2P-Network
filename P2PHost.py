@@ -46,9 +46,8 @@ class P2PHost:
             p2p_packet = pickle.loads(received_data)
             
             if len(self.bidirectional_host_addresses) < config.NUMBER_OF_NEIGHBOURS:
-                if p2p_packet.host_address in self.bidirectional_host_addresses:
-                    break
-                else:
+                if p2p_packet.host_address not in self.bidirectional_host_addresses:
+                    self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
                     self.bidirectional_host_addresses.add(p2p_packet.host)
                     if self.host_address not in p2p_packet.bidirectional_host_address:
                         self.send_hello_packet(p2p_packet.host)
