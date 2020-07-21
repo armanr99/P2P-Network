@@ -35,7 +35,7 @@ class P2PHost:
 
     def find_neighbours_run(self):
         while not self.is_finished:
-            if len(self.neighbour_addresses) < config.NUMBER_OF_NEIGHBOURS:
+            if len(self.neighbour_addresses) < len(config.HOST_ADDRESSES):
                     random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
                     self.send_hello_packet(random_host_address)
 
@@ -47,7 +47,7 @@ class P2PHost:
             p2p_packet = pickle.loads(received_data)
             self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
             
-            if len(self.neighbour_addresses) < config.NUMBER_OF_NEIGHBOURS:
+            if len(self.neighbour_addresses) < len(config.HOST_ADDRESSES):
                 if p2p_packet.host_address not in self.neighbour_addresses:
                     self.neighbour_addresses.add(p2p_packet.host_address)
                     if self.host_address not in p2p_packet.neighbour_addresses:
