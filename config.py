@@ -1,0 +1,2 @@
+HOSTS_IP = "localhost"
+HOSTS_PORTS = [7032, 7033, 7034, 7035, 7036, 7037]
