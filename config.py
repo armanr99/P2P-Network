@@ -4,8 +4,10 @@ HOST_ADDRESSES = {("localhost", 7032),
                   ("localhost", 7035), 
                   ("localhost", 7036), 
                   ("localhost", 7037)}
+NUMBER_OF_NEIGHBOURS = 3
 HELLO_MESSAGE_TYPE = "Hello"
 UNDEFINED = -1
-SEND_TIME = 2
-CHECK_NEIGHBOUR_TIME = 1
-NUMBER_OF_NEIGHBOURS = 3
+SEND_PERIOD = 2
+FIND_NEIGHBOURS_PERIOD = 1
+REMOVE_OLD_NEIGHBOURS_PERIOD = 1
+REMOVE_NEIGHBOUR_TIME = 8
