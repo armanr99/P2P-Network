@@ -77,10 +77,14 @@ class LogTools:
         self.write_json(last_neighbours_neighbours_result_path, last_neighbours_neighbours)
 
     def write_unidirectional_sent_packets(self):
-        pass
+        self.unidirectional_sent_addresses = self.unidirectional_sent_addresses - set(self.latest_neighbours_infos.keys())
+        unidirectional_sent_neighbours_result_path = self.get_host_directory_path() + "/" + "4-UnidirectionalSentNeighbours.json"
+        self.write_json(unidirectional_sent_neighbours_result_path, list(self.unidirectional_sent_addresses))
 
     def write_unidirectional_received_packets(self):
-        pass
+        self.unidirectional_received_addresses = self.unidirectional_received_addresses - set(self.latest_neighbours_infos.keys())
+        unidirectional_received_neighbours_result_path = self.get_host_directory_path() + "/" + "4-UnidirectionalReceivedNeighbours.json"
+        self.write_json(unidirectional_received_neighbours_result_path, list(self.unidirectional_received_addresses))
 
     def get_remaped_dict(self, mapping, key, value):
         return [{str(key):k, str(value): v} for k, v in mapping.items()]

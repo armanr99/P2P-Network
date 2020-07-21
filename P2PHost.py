@@ -80,7 +80,6 @@ class P2PHost:
                     continue
 
                 self.log_tools.add_unidirectional_received_address_log(p2p_packet.host_address)
-            
                 self.lock.acquire()
 
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
