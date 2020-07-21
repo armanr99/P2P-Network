@@ -21,5 +21,4 @@ class P2PNetwork:
 
     def run_hosts(self):
         for host in self.hosts:
-            host_thread = threading.Thread(target=host.start)
-            host_thread.start()
+            threading.Thread(target=host.start).start()
