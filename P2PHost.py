@@ -16,7 +16,7 @@ class P2PHost:
         self.hosts_last_receive_time = dict()
         self.init_hosts_last_receive_time()
         self.udp_tools = UDPTools(host_address)
-        self.neighbour_addresses_lock = threading.Lock()
+        self.lock = threading.Lock()
 
     def init_hosts_last_receive_time(self):
         for host_address in config.HOST_ADDRESSES:
@@ -38,32 +38,28 @@ class P2PHost:
     def resume(self):
         self.is_paused = False
 
-    def get_neighbour_addresses(self):
-        self.neighbour_addresses_lock.acquire()
-        return self.neighbour_addresses
-
     def send_neighbours_packets_run(self):
         while not self.is_finished:
             if not self.is_paused:
-                neighbour_addresses = self.get_neighbour_addresses()
-                print(len(neighbour_addresses))
-                for neighbour_address in neighbour_addresses:
+                self.lock.acquire()
+
+                for neighbour_address in self.neighbour_addresses:
                     self.send_hello_packet(neighbour_address)
 
-                self.neighbour_addresses_lock.release()
+                self.lock.release()
 
             time.sleep(config.SEND_PERIOD)
 
     def find_neighbours_run(self):
         while not self.is_finished:
             if not self.is_paused:
-                neighbour_addresses = self.get_neighbour_addresses()
+                self.lock.acquire()
 
-                if len(neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
-                        random_host_address = random.choice(tuple(config.HOST_ADDRESSES - neighbour_addresses))
+                if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
+                        random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
                         self.send_hello_packet(random_host_address)
                 
-                self.neighbour_addresses_lock.release()
+                self.lock.release()
 
             time.sleep(config.FIND_NEIGHBOURS_PERIOD)
 
@@ -78,26 +74,26 @@ class P2PHost:
                 if is_lost_packet:
                     continue
                 
-                neighbour_addresses = self.get_neighbour_addresses()
+                self.lock.acquire()
 
-                if len(neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
-                    if p2p_packet.host_address not in neighbour_addresses:
-                        neighbour_addresses.add(p2p_packet.host_address)
+                if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
+                    if p2p_packet.host_address not in self.neighbour_addresses:
+                        self.neighbour_addresses.add(p2p_packet.host_address)
                         if self.host_address not in p2p_packet.neighbour_addresses:
                             self.send_hello_packet(p2p_packet.host_address)
 
-                self.neighbour_addresses_lock.release()
+                self.lock.release()
 
     def remove_old_neighbours_run(self):
         while not self.is_finished:
             if not self.is_paused:
-                neighbour_addresses = self.get_neighbour_addresses()
+                self.lock.acquire()
 
-                for neighbour_address in neighbour_addresses:
+                for neighbour_address in list(self.neighbour_addresses):
                     if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
-                        neighbour_addresses.remove(neighbour_address)
+                        self.neighbour_addresses.remove(neighbour_address)
                 
-                self.neighbour_addresses_lock.release()
+                self.lock.release()
                 
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
