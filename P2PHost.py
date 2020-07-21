@@ -26,6 +26,10 @@ class P2PHost:
         threading.Thread(target=self.receive_packet_run).start()
         threading.Thread(target=self.remove_old_neighbours_run).start()
 
+    def stop(self):
+        self.is_finished = True
+        self.udp_tools.stop()
+
     def send_neighbours_packets_run(self):
         while not self.is_finished:
             for neighbour_address in self.neighbour_addresses:
@@ -58,8 +62,9 @@ class P2PHost:
             for neighbour_address in self.neighbour_addresses:
                 if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
                     self.neighbour_addresses.remove(neighbour_address)
+
+            time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
         
-        time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
 
     def get_hello_packet(self, host_address):
         return P2PPacket(self.host_address, config.HELLO_MESSAGE_TYPE, 

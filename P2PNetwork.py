@@ -11,6 +11,7 @@ class P2PNetwork:
     def start(self):
         self.create_hosts()
         self.run_hosts()
+        threading.Thread(target=self.finish_hosts_run).start()
 
     def stop(self):
         pass
@@ -22,3 +23,8 @@ class P2PNetwork:
     def run_hosts(self):
         for host in self.hosts:
             threading.Thread(target=host.start).start()
+
+    def finish_hosts_run(self):
+        time.sleep(config.SIMULATION_TIME)
+        for host in self.hosts:
+            host.stop()
