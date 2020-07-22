@@ -28,7 +28,7 @@ class P2PHost:
             
     def start(self):
         threading.Thread(target=self.send_neighbours_packets_run).start()
-        threading.Thread(target=self.find_new_neighbours).start()
+        threading.Thread(target=self.find_new_neighbours_run).start()
         threading.Thread(target=self.receive_packet_run).start()
         threading.Thread(target=self.remove_old_neighbours_run).start()
         threading.Thread(target=self.gather_log_info_run).start()
@@ -58,7 +58,7 @@ class P2PHost:
                     self.send_hello_packet(neighbour_address)
                     self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
 
-    def find_new_neighbours(self):
+    def find_new_neighbours_run(self):
         while not self.is_finished:
             if not self.is_paused:
                 self.lock.acquire()
