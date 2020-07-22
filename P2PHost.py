@@ -27,7 +27,7 @@ class P2PHost:
             
     def start(self):
         threading.Thread(target=self.send_neighbours_packets_run).start()
-        threading.Thread(target=self.find_neighbours_run).start()
+        threading.Thread(target=self.find_new_neighbours).start()
         threading.Thread(target=self.receive_packet_run).start()
         threading.Thread(target=self.remove_old_neighbours_run).start()
         threading.Thread(target=self.gather_log_info_run).start()
@@ -47,69 +47,77 @@ class P2PHost:
         while not self.is_finished:
             if not self.is_paused:
                 self.lock.acquire()
-
-                for neighbour_address in self.neighbour_addresses:
-                    self.send_hello_packet(neighbour_address)
-                    self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
-
+                self.send_neighbours_packets()
                 self.lock.release()
 
             time.sleep(config.SEND_PERIOD)
 
-    def find_neighbours_run(self):
+    def send_neighbours_packets(self):
+        for neighbour_address in self.neighbour_addresses:
+                    self.send_hello_packet(neighbour_address)
+                    self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
+
+    def find_new_neighbours(self):
         while not self.is_finished:
             if not self.is_paused:
                 self.lock.acquire()
-
-                if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
-                        random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
-                        self.send_hello_packet(random_host_address)
-                        self.log_tools.log_sent_packet(random_host_address, self.neighbour_addresses)
-                
+                self.find_new_neighbour()  
                 self.lock.release()
-
+                
             time.sleep(config.FIND_NEIGHBOURS_PERIOD)
+
+    def find_new_neighbour(self):
+        if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
+            random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
+            self.send_hello_packet(random_host_address)
+            self.log_tools.log_sent_packet(random_host_address, self.neighbour_addresses)
 
     def receive_packet_run(self):
         while not self.is_finished:
             if not self.is_paused:
-                received_data = self.udp_tools.receive_udp_packet()
-                p2p_packet = pickle.loads(received_data)
-                self.hosts_last_receive_time[p2p_packet.host_address] = time.time()
-
-                if (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY):
-                    continue
-
-                self.log_tools.log_received_packet(p2p_packet.host_address, self.neighbour_addresses)
+                received_packet = self.receive_packet()
                 self.lock.acquire()
-
-                if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
-                    if p2p_packet.host_address not in self.neighbour_addresses:
-                        self.neighbour_addresses.add(p2p_packet.host_address)
-                        self.log_tools.log_neighbour(p2p_packet.host_address, p2p_packet.neighbour_addresses)
-                        if self.host_address not in p2p_packet.neighbour_addresses:
-                            self.send_hello_packet(p2p_packet.host_address)
-                            self.log_tools.log_sent_packet(p2p_packet.host_address, self.neighbour_addresses)
-
+                self.handle_received_packet(received_packet)
                 self.lock.release()
+
+    def receive_packet(self):
+        received_data = self.udp_tools.receive_udp_packet()
+        received_packet = pickle.loads(received_data)
+
+        self.hosts_last_receive_time[received_packet.host_address] = time.time()
+        self.log_tools.log_received_packet(received_packet.host_address, self.neighbour_addresses)
+        
+        if (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY):
+            return self.receive_packet()
+        else:
+            return received_packet
+
+    def handle_received_packet(self, received_packet):
+        if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
+            if received_packet.host_address not in self.neighbour_addresses:
+                self.neighbour_addresses.add(received_packet.host_address)
+                self.log_tools.log_neighbour(received_packet.host_address, received_packet.neighbour_addresses)
+                if self.host_address not in received_packet.neighbour_addresses:
+                    self.send_hello_packet(received_packet.host_address)
+                    self.log_tools.log_sent_packet(received_packet.host_address, self.neighbour_addresses)
 
     def remove_old_neighbours_run(self):
         while not self.is_finished:
             if not self.is_paused:
                 self.lock.acquire()
-
-                for neighbour_address in list(self.neighbour_addresses):
-                    if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
-                        self.neighbour_addresses.remove(neighbour_address)
-                        self.log_tools.log_remove_neighbour(neighbour_address)
-                
+                self.remove_old_neighbours()                
                 self.lock.release()
                 
             time.sleep(config.REMOVE_OLD_NEIGHBOURS_PERIOD)
-        
+    
+    def remove_old_neighbours(self):
+        for neighbour_address in list(self.neighbour_addresses):
+            if (time.time() - self.hosts_last_receive_time[neighbour_address]) >= config.REMOVE_NEIGHBOUR_TIME:
+                self.neighbour_addresses.remove(neighbour_address)
+                self.log_tools.log_remove_neighbour(neighbour_address)
+
     def gather_log_info_run(self):
         time_passed = 0
-
         while time_passed <= config.SIMULATION_TIME:
             self.log_tools.log_neighbours_access_times(self.neighbour_addresses)
             time_passed += config.LOG_NEIGHBOURS_TIME_PERIOD
