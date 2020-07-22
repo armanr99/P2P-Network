@@ -9,15 +9,14 @@ class LogTools:
         self.all_neighbour_addresses = set()
         self.neighbours_access_times = dict()
         self.latest_neighbours_infos = dict()
+        self.received_packets_count = dict()
+        self.sent_packets_count = dict()
         self.unidirectional_sent_addresses = set()
         self.unidirectional_received_addresses = set()
 
     def log_neighbours_access_times(self, current_neighbours_addresses):
         for neighbour_address in current_neighbours_addresses:
-            if neighbour_address in self.neighbours_access_times:
-                self.neighbours_access_times[neighbour_address] += config.LOG_NEIGHBOURS_TIME_PERIOD
-            else:
-                self.neighbours_access_times[neighbour_address] = config.LOG_NEIGHBOURS_TIME_PERIOD
+            self.log_host_info_count(neighbour_address, self.neighbours_access_times, config.LOG_NEIGHBOURS_TIME_PERIOD)
 
     def log_neighbour(self, neighbour_address, neighbour_neighbour_addresses):
         self.all_neighbour_addresses.add(neighbour_address)
@@ -27,11 +26,25 @@ class LogTools:
         if neighbour_address in self.latest_neighbours_infos:
             del self.latest_neighbours_infos[neighbour_address]
 
-    def add_unidirectional_sent_address_log(self, unidirectional_received_address):
-        self.unidirectional_sent_addresses.add(unidirectional_received_address)
+    def log_send_packet(self, neighbour_address):
+        self.log_host_info_count(neighbour_address, self.sent_packets_count, 1)
 
-    def add_unidirectional_received_address_log(self, unidirectional_received_address):
-        self.unidirectional_received_addresses.add(unidirectional_received_address)
+    def log_receive_packet(self, neighbour_address):
+        self.log_host_info_count(neighbour_address, self.received_packets_count, 1)
+
+    def log_host_info_count(self, neighbour_address, count_list, amount):
+        if neighbour_address not in count_list:
+            count_list[neighbour_address] = amount
+        else:
+            count_list[neighbour_address] += amount
+
+    def log_sent_packet(self, received_packet_address, neighbour_addresses):
+        self.log_host_info_count(received_packet_address, self.sent_packets_count, 1)
+        self.unidirectional_sent_addresses.add(received_packet_address)
+
+    def log_received_packet(self, sent_packet_address, neighbour_addresses):
+        self.log_host_info_count(sent_packet_address, self.received_packets_count, 1)
+        self.unidirectional_received_addresses.add(sent_packet_address)
 
     def write_results(self):
         self.create_host_directory()

@@ -50,6 +50,7 @@ class P2PHost:
 
                 for neighbour_address in self.neighbour_addresses:
                     self.send_hello_packet(neighbour_address)
+                    self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
 
                 self.lock.release()
 
@@ -63,7 +64,7 @@ class P2PHost:
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
                         random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
                         self.send_hello_packet(random_host_address)
-                        self.log_tools.add_unidirectional_sent_address_log(random_host_address)
+                        self.log_tools.log_sent_packet(random_host_address, self.neighbour_addresses)
                 
                 self.lock.release()
 
@@ -79,7 +80,7 @@ class P2PHost:
                 if (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY):
                     continue
 
-                self.log_tools.add_unidirectional_received_address_log(p2p_packet.host_address)
+                self.log_tools.log_received_packet(p2p_packet.host_address, self.neighbour_addresses)
                 self.lock.acquire()
 
                 if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
@@ -88,6 +89,7 @@ class P2PHost:
                         self.log_tools.log_neighbour(p2p_packet.host_address, p2p_packet.neighbour_addresses)
                         if self.host_address not in p2p_packet.neighbour_addresses:
                             self.send_hello_packet(p2p_packet.host_address)
+                            self.log_tools.log_sent_packet(p2p_packet.host_address, self.neighbour_addresses)
 
                 self.lock.release()
 
