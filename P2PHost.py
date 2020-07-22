@@ -9,9 +9,10 @@ from UDPTools import UDPTools
 from LogTools import LogTools
 
 class P2PHost:
-    def __init__(self, host_id, host_address):
+    def __init__(self, host_id, host_address, other_host_addresses):
         self.host_id = host_id
         self.host_address = host_address
+        self.other_host_addresses = other_host_addresses
         self.is_finished = False
         self.is_paused = False
         self.neighbour_addresses = set()
@@ -22,7 +23,7 @@ class P2PHost:
         self.log_tools = LogTools(host_address)
 
     def init_hosts_last_receive_time(self):
-        for host_address in config.HOST_ADDRESSES:
+        for host_address in self.other_host_addresses:
             self.hosts_last_receive_time[host_address] = config.UNDEFINED
             
     def start(self):
@@ -68,7 +69,7 @@ class P2PHost:
 
     def find_new_neighbour(self):
         if len(self.neighbour_addresses) < config.MAX_NUMBER_OF_HOSTS:
-            random_host_address = random.choice(tuple(config.HOST_ADDRESSES - self.neighbour_addresses))
+            random_host_address = random.choice(tuple(self.other_host_addresses - self.neighbour_addresses))
             self.send_hello_packet(random_host_address)
             self.log_tools.log_sent_packet(random_host_address, self.neighbour_addresses)
 

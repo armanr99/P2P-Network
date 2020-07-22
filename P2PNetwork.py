@@ -20,7 +20,9 @@ class P2PNetwork:
 
     def create_hosts(self):
         for host_id, host_address in enumerate(config.HOST_ADDRESSES):
-            self.hosts.append(P2PHost(host_id, host_address))
+            other_host_addresses = set(config.HOST_ADDRESSES)
+            other_host_addresses.remove(host_address)
+            self.hosts.append(P2PHost(host_id, host_address, other_host_addresses))
 
     def run_hosts(self):
         for host in self.hosts:
@@ -31,9 +33,7 @@ class P2PNetwork:
         
         for host in self.hosts:
             host.stop()
-
-        print("Finished!")
-
+            
     def pause_host_run(self):
         passed_time = 0
         paused_hosts_infos = list()
