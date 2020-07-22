@@ -75,10 +75,13 @@ class P2PHost:
     def receive_packet_run(self):
         while not self.is_finished:
             if not self.is_paused:
-                received_packet = self.receive_packet()
-                self.lock.acquire()
-                self.handle_received_packet(received_packet)
-                self.lock.release()
+                try:
+                    received_packet = self.receive_packet()
+                    self.lock.acquire()
+                    self.handle_received_packet(received_packet)
+                    self.lock.release()
+                except:
+                    continue
 
     def receive_packet(self):
         received_data = self.udp_tools.receive_udp_packet()
@@ -88,7 +91,7 @@ class P2PHost:
         self.log_tools.log_received_packet(received_packet.host_address, self.neighbour_addresses)
         
         if (random.randint(0, 100) <= config.PACKET_LOSS_PROBABILITY):
-            return self.receive_packet()
+            raise Exception("Receiving packet is lost")
         else:
             return received_packet
 

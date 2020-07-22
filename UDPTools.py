@@ -3,6 +3,7 @@ import socket
 class UDPTools:
     def __init__(self, server_address):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.server_socket.setblocking(0)
         self.server_socket.bind((server_address[0], server_address[1]))
 
     def stop(self):
@@ -14,5 +15,4 @@ class UDPTools:
         client_sock.close()
 
     def receive_udp_packet(self):
-        data_bytes, address = self.server_socket.recvfrom(1024)
-        return data_bytes
+        return self.server_socket.recvfrom(1024)[0]
