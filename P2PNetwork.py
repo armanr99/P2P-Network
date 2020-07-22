@@ -47,7 +47,7 @@ class P2PNetwork:
             paused_hosts_infos.append((random_host, passed_time))
             
             if passed_time - paused_hosts_infos[0][1] >= config.PAUSE_HOST_TIME:
-                to_resume_host = paused_hosts_infos.pop()[0]
+                to_resume_host = paused_hosts_infos.pop(0)[0]
                 if to_resume_host not in [paused_hosts_info[0] for paused_hosts_info in paused_hosts_infos]:
                     to_resume_host.resume()
         
