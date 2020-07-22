@@ -13,6 +13,7 @@ class LogTools:
         self.sent_packets_count = dict()
         self.unidirectional_sent_addresses = set()
         self.unidirectional_received_addresses = set()
+        self.result_path = config.RESULTS_DIRECTORY + "/" + self.host_address[0] + ":" + str(self.host_address[1]) + ".json"
 
     def log_neighbours_access_times(self, current_neighbours_addresses):
         for neighbour_address in current_neighbours_addresses:
@@ -20,7 +21,7 @@ class LogTools:
 
     def log_neighbour(self, neighbour_address, neighbour_neighbour_addresses):
         self.all_neighbour_addresses.add(neighbour_address)
-        self.latest_neighbours_neighbours[neighbour_address] = list(neighbour_neighbour_addresses)
+        self.latest_neighbours_neighbours[neighbour_address] = neighbour_neighbour_addresses
 
     def log_remove_neighbour(self, neighbour_address):
         if neighbour_address in self.latest_neighbours_neighbours:
@@ -47,68 +48,47 @@ class LogTools:
         self.unidirectional_received_addresses.add(sent_packet_address)
 
     def write_results(self):
-        self.create_host_directory()
-        self.write_all_neighbours()
-        self.write_last_neighbours()
-        self.write_hosts_availability()
-        self.write_last_neighbours_neighbours()
-        self.write_unidirectional_sent_packets()
-        self.write_unidirectional_received_packets()
-
-    def create_host_directory(self):
-        host_directory_path = self.get_host_directory_path()
-
-        if os.path.isdir(host_directory_path):
-            shutil.rmtree(host_directory_path)
-
-        os.mkdir(host_directory_path)
+        result_object = self.get_result_object()
+        self.write_json(self.result_path, result_object)
         
-    def get_host_directory_path(self):
-        return (config.RESULTS_DIRECTORY + "/" + self.host_address[0] + ":" + str(self.host_address[1]))
-
     def write_json(self, path, data):
         with open(path, "w", encoding="utf-8") as result_file:
             json.dump(data, result_file, ensure_ascii=False, indent=4)
 
-    def get_host_result_object(self, address_tuple):
-        return {"address": address_tuple[0], "port": address_tuple[1]}
+    def get_neighbours_result_object(self, neighbour_addresses):
+        return [{"address": neighbour_address[0], 
+                 "port": neighbour_address[1]}
+                 for neighbour_address in neighbour_addresses]
 
-    def get_host_results_object(self, host_address_list):
-        results = list()
-        for host_address in host_address_list:
-            results.append(self.get_host_result_object(host_address))
-        return results
+    def get_all_neighbours_result_object(self):
+        return [{"address": neighbour_address[0], 
+                 "port": neighbour_address[1],
+                 "packetsReceivedCount": self.received_packets_count[neighbour_address],
+                 "packetsSentCount": self.sent_packets_count[neighbour_address]}
+                 for neighbour_address in self.all_neighbour_addresses]
 
-    def write_all_neighbours(self):
-        all_neighbours_result_path = self.get_host_directory_path() + "/" + "1-AllNeighbours.json"
-        all_neighbours_result_object = self.get_host_results_object(self.all_neighbour_addresses)
-        self.write_json(all_neighbours_result_path, all_neighbours_result_object)
-
-    def write_last_neighbours(self):
-        last_neighbours_result_path = self.get_host_directory_path() + "/" + "2-LastNeighbours.json"
-        last_neighbours_result_object = self.get_host_results_object(self.latest_neighbours_neighbours.keys())
-        self.write_json(last_neighbours_result_path, last_neighbours_result_object)
+    def get_availabilities_result_object(self):
+        return [{"address": address_tuple[0],
+                 "port": address_tuple[1],
+                 "availability": total_time / config.SIMULATION_TIME} 
+                 for address_tuple, total_time in self.neighbours_access_times.items()]
     
-    def write_hosts_availability(self):
-        neighbour_availabilities_result_path = self.get_host_directory_path() + "/" + "3-Availabilities.json"
-        neighbour_availabilities = {key: value / config.SIMULATION_TIME for key, value in self.neighbours_access_times.items()}
-        neighbour_availabilities = self.get_remaped_dict(neighbour_availabilities, "host", "availability")
-        self.write_json(neighbour_availabilities_result_path, neighbour_availabilities)
+    def get_neighbours_topology_result_object(self):
+        return [{"address": neighbour_address[0],
+                 "port": neighbour_address[1],
+                 "neighbours": self.get_neighbours_result_object(neighbour_neighbours)}
+                 for neighbour_address, neighbour_neighbours in self.latest_neighbours_neighbours.items()]
 
-    def write_last_neighbours_neighbours(self):
-        last_neighbours_neighbours_result_path = self.get_host_directory_path() + "/" + "4-LastNeighbourNeighbours.json"
-        last_neighbours_neighbours = self.get_remaped_dict(self.latest_neighbours_neighbours, "host", "neighbours")
-        self.write_json(last_neighbours_neighbours_result_path, last_neighbours_neighbours)
+    def get_unidirectional_result_object(self, unidrectional_hosts):
+        unidrectional_hosts = unidrectional_hosts - set(self.latest_neighbours_neighbours.keys())
+        return self.get_neighbours_result_object(unidrectional_hosts)
 
-    def write_unidirectional_sent_packets(self):
-        self.unidirectional_sent_addresses = self.unidirectional_sent_addresses - set(self.latest_neighbours_neighbours.keys())
-        unidirectional_sent_neighbours_result_path = self.get_host_directory_path() + "/" + "4-UnidirectionalSentNeighbours.json"
-        self.write_json(unidirectional_sent_neighbours_result_path, list(self.unidirectional_sent_addresses))
-
-    def write_unidirectional_received_packets(self):
-        self.unidirectional_received_addresses = self.unidirectional_received_addresses - set(self.latest_neighbours_neighbours.keys())
-        unidirectional_received_neighbours_result_path = self.get_host_directory_path() + "/" + "4-UnidirectionalReceivedNeighbours.json"
-        self.write_json(unidirectional_received_neighbours_result_path, list(self.unidirectional_received_addresses))
-
-    def get_remaped_dict(self, mapping, key, value):
-        return [{str(key):k, str(value): v} for k, v in mapping.items()]
+    def get_result_object(self):
+        result_object = dict()
+        result_object["allNeighbours"] = self.get_all_neighbours_result_object()
+        result_object["lastNeighbours"] = self.get_neighbours_result_object(self.latest_neighbours_neighbours.keys())
+        result_object["availabilities"] = self.get_availabilities_result_object()
+        result_object["neighboursTopology"] = self.get_neighbours_topology_result_object()
+        result_object["unidirectionalSentHosts"] = self.get_unidirectional_result_object(self.unidirectional_sent_addresses)
+        result_object["unidirectionalReceivedHosts"] = self.get_unidirectional_result_object(self.unidirectional_received_addresses)
+        return result_object
