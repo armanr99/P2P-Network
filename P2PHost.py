@@ -55,8 +55,8 @@ class P2PHost:
 
     def send_neighbours_packets(self):
         for neighbour_address in self.neighbour_addresses:
-                    self.send_hello_packet(neighbour_address)
-                    self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
+            self.send_hello_packet(neighbour_address)
+            self.log_tools.log_sent_packet(neighbour_address, self.neighbour_addresses)
 
     def find_new_neighbours_run(self):
         while not self.is_finished:
